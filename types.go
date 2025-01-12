@@ -7,11 +7,11 @@ import (
 // Message represents the payload structure for creating a notification message in
 // Microsoft Teams via webhook.
 type Message struct {
-	Title    string    `json:"title"`
-	Summary  string    `json:"summary,omitempty"`
-	Text     string    `json:"text,omitempty"`
-	Theme    string    `json:"themeColor,omitempty"`
-	Sections []Section `json:"sections,omitempty"`
+	Title    string     `json:"title"`
+	Summary  string     `json:"summary,omitempty"`
+	Text     string     `json:"text,omitempty"`
+	Theme    ThemeColor `json:"themeColor,omitempty"`
+	Sections []Section  `json:"sections,omitempty"`
 }
 
 // Section represents a logical grouping in a notification message to organize content.
