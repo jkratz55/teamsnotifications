@@ -34,16 +34,16 @@ func New(webhook string, opts ...Option) *Client {
 	return c
 }
 
-// PostMessage marshals the Message and sends to the MS Teams webhook. If the
-// webhook responds with a non-successful HTTP status code a non-nil error value
-// will be returned.
-func (c *Client) PostMessage(ctx context.Context, msg Message) error {
-	payload, err := json.Marshal(msg)
+// PostPayload marshals any payload value and sends it to the MS Teams webhook.
+// If the webhook responds with a non-successful HTTP status code a non-nil error
+// value will be returned.
+func (c *Client) PostPayload(ctx context.Context, payload any) error {
+	body, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.webhook, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.webhook, bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
@@ -64,16 +64,16 @@ func (c *Client) PostMessage(ctx context.Context, msg Message) error {
 	return nil
 }
 
-// PostMessage marshals the Message and sends to the MS Teams webhook using the
-// default http.Client. If the webhook responds with a non-successful HTTP status
-// code a non-nil error value will be returned.
-func PostMessage(ctx context.Context, webhook string, msg Message) error {
-	payload, err := json.Marshal(msg)
+// PostPayload marshals any payload value and sends it to the MS Teams webhook
+// using the default http.Client. If the webhook responds with a non-successful
+// HTTP status code a non-nil error value will be returned.
+func PostPayload(ctx context.Context, webhook string, payload any) error {
+	body, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, webhook, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, webhook, bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
