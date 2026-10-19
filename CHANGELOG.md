@@ -6,7 +6,6 @@ This release contains breaking API changes. See [Upgrading from v0.2.0](#upgradi
 
 ### Breaking changes
 
-* Adaptive Cards must now be wrapped in a `Message` before posting, using `NewAdaptiveCardMessage`. Teams webhooks don't render a bare `AdaptiveCard`: the request is accepted but the card never appears in the channel.
 * The `Type` fields have been removed from the Adaptive Card types. Each type now sets its `type` property when marshaled.
 * `AdaptiveCard.Body` is now `[]AdaptiveCardElement` instead of `[]any`. Use `RawAdaptiveCardElement` for elements the package doesn't model.
 * `AdaptiveCardTextBlock.Weight`, `Size` and `Color` are now the typed `TextWeight`, `TextSize` and `TextColor`. String literals still compile.
@@ -15,7 +14,7 @@ This release contains breaking API changes. See [Upgrading from v0.2.0](#upgradi
 
 ### Added
 
-* `Message`, `Attachment`, `NewAdaptiveCardMessage` and `AdaptiveCardContentType` for the Teams message envelope.
+* `Message`, `Attachment`, `NewAdaptiveCardMessage` and `AdaptiveCardContentType` for webhooks whose flow reads cards from an `attachments` array. Posting a bare `AdaptiveCard` works as before, so use the envelope only if your webhook expects it. See the README for how to tell.
 * `AdaptiveCardContainer`, `AdaptiveCardColumnSet` and `AdaptiveCardColumn` for layout.
 * `AdaptiveCard.Actions` with `AdaptiveCardOpenURLAction`, and `RawAdaptiveCardAction` for other actions.
 * `AdaptiveCard.MSTeams` (`AdaptiveCardMSTeams`) for Teams-specific properties, such as full-width cards with `AdaptiveCardWidthFull`.
@@ -36,9 +35,8 @@ This release contains breaking API changes. See [Upgrading from v0.2.0](#upgradi
 
 1. Remove `Type: "..."` from every card, text block and fact set.
 2. Change `Body: []any{...}` to `Body: []teams.AdaptiveCardElement{...}`.
-3. Wrap cards before posting: `PostPayload(ctx, card)` becomes `PostPayload(ctx, teams.NewAdaptiveCardMessage(card))`.
-4. Rename `WithHttpClient` to `WithHTTPClient` and `HttpClient` to `HTTPClient`.
-5. If you matched on error message text, use `errors.As(err, &statusErr)` with a `*teams.StatusError` instead.
+3. Rename `WithHttpClient` to `WithHTTPClient` and `HttpClient` to `HTTPClient`.
+4. If you matched on error message text, use `errors.As(err, &statusErr)` with a `*teams.StatusError` instead.
 
 ```go
 // v0.2.0
@@ -54,8 +52,10 @@ err := client.PostPayload(ctx, card)
 card := teams.AdaptiveCard{
 	Body: []teams.AdaptiveCardElement{teams.AdaptiveCardTextBlock{Text: "Deployed", Weight: teams.WeightBolder}},
 }
-err := client.PostPayload(ctx, teams.NewAdaptiveCardMessage(card))
+err := client.PostPayload(ctx, card)
 ```
+
+The card marshals to the same JSON as before, so webhooks that worked with v0.2.0 keep working without changes.
 
 ## v0.2.0
 

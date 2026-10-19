@@ -21,15 +21,16 @@ const (
 // never has to be filled in by hand. Each MarshalJSON converts the value to a
 // local type without methods to avoid recursing into itself.
 
-// Message is the envelope Teams webhooks expect. Adaptive Cards are sent as
-// attachments of a Message rather than posted on their own. Use
-// NewAdaptiveCardMessage to build one.
+// Message is the envelope, with cards as attachments, that Microsoft documents
+// for Teams incoming webhooks. Use it when the webhook's flow reads cards from
+// the attachments array. Flows that post the request body directly as a card
+// expect a bare AdaptiveCard instead. Use NewAdaptiveCardMessage to build one.
 type Message struct {
 	Attachments []Attachment `json:"attachments"`
 }
 
-// NewAdaptiveCardMessage wraps cards in a Message ready to post to a Teams
-// webhook.
+// NewAdaptiveCardMessage wraps cards in a Message for webhooks that read cards
+// from an attachments array.
 func NewAdaptiveCardMessage(cards ...AdaptiveCard) Message {
 	attachments := make([]Attachment, len(cards))
 	for i, card := range cards {
@@ -56,8 +57,8 @@ type Attachment struct {
 	Content     any    `json:"content"`
 }
 
-// AdaptiveCard represents a top-level Adaptive Card. Wrap it with
-// NewAdaptiveCardMessage before posting it to a Teams webhook.
+// AdaptiveCard represents a top-level Adaptive Card. Post it directly or wrap
+// it with NewAdaptiveCardMessage, depending on what the webhook expects.
 type AdaptiveCard struct {
 	// Version defaults to DefaultAdaptiveCardVersion when empty.
 	Version string                `json:"version"`

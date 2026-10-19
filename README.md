@@ -16,7 +16,7 @@ import teams "github.com/jkratz55/teamsnotifications"
 
 ## Usage
 
-Teams webhooks expect Adaptive Cards to be wrapped in a message envelope. Build the card, then wrap it with `NewAdaptiveCardMessage`:
+Build a card, then post it in the format your webhook expects:
 
 ```go
 card := teams.AdaptiveCard{
@@ -40,8 +40,17 @@ card := teams.AdaptiveCard{
 	MSTeams: &teams.AdaptiveCardMSTeams{Width: teams.AdaptiveCardWidthFull},
 }
 
-err := teams.PostPayload(ctx, webhookURL, teams.NewAdaptiveCardMessage(card))
+// Flows that post the request body as the card take the bare card.
+err := teams.PostPayload(ctx, webhookURL, card)
+
+// Flows that read cards from an attachments array take the card wrapped in a message.
+err = teams.PostPayload(ctx, webhookURL, teams.NewAdaptiveCardMessage(card))
 ```
+
+Which format to use depends on the webhook, not on Teams itself. A Workflows webhook runs a Power Automate flow, and the flow decides how to read the request body. Open the flow and find its "Post card in a chat or channel" action:
+
+* If the action's Adaptive Card field is the trigger's `Body` (`triggerBody()`), post the bare card.
+* If the action sits inside an "Apply to each" over `attachments`, wrap the card with `NewAdaptiveCardMessage`. This wrapped format is also the one Microsoft documents for incoming webhooks.
 
 The `type` property of each element is set for you, and `version` and `$schema` default to `1.4` and the Adaptive Card schema. For elements or actions this package doesn't model, such as `Image`, pass their JSON as a `RawAdaptiveCardElement` or `RawAdaptiveCardAction`. You can also post any other JSON-serializable payload your webhook expects.
 
@@ -68,6 +77,6 @@ Webhook URLs contain credentials, so they are redacted from returned errors. Kee
 ## Things to know about Teams webhooks
 
 * Office 365 Connector incoming webhooks are retired. Create webhooks with the Teams Workflows app instead ("Send webhook alerts to a channel" template).
-* Workflows webhooks respond with `202 Accepted` before the workflow runs, so a nil error means the request was accepted, not that the message was posted. Check the workflow's run history if a message doesn't show up.
+* Workflows webhooks respond with `202 Accepted` before the workflow runs, so a nil error means the request was accepted, not that the message was posted. If a message doesn't show up, check the workflow's run history. A payload in a format the flow doesn't expect fails there, not in the HTTP response.
 * Messages are limited to 28 KB.
 * Teams throttles webhooks that receive more than four requests per second. Retry `429` responses with exponential backoff.

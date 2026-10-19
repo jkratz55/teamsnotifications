@@ -92,6 +92,38 @@ func TestPostPayloadSendsAdaptiveCardMessage(t *testing.T) {
 	}
 }
 
+// Webhooks whose flow posts the request body as the card expect a bare card, as
+// sent by v0.2.0. Keep that format working alongside the message envelope.
+func TestPostPayloadSendsBareAdaptiveCard(t *testing.T) {
+	const expectedBody = `{
+		"type": "AdaptiveCard",
+		"version": "1.4",
+		"body": [{"type": "TextBlock", "text": "checkout-service deployed to production", "wrap": true}],
+		"$schema": "http://adaptivecards.io/schemas/adaptive-card.json"
+	}`
+
+	for _, poster := range posters {
+		t.Run(poster.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				body, err := io.ReadAll(r.Body)
+				if err != nil {
+					t.Errorf("read request body: %v", err)
+				}
+				assertJSONEqual(t, string(body), expectedBody)
+				w.WriteHeader(http.StatusAccepted)
+			}))
+			defer server.Close()
+
+			card := AdaptiveCard{Body: []AdaptiveCardElement{
+				AdaptiveCardTextBlock{Text: "checkout-service deployed to production", Wrap: true},
+			}}
+			if err := poster.post(context.Background(), server.URL, card); err != nil {
+				t.Fatalf("PostPayload() error = %v", err)
+			}
+		})
+	}
+}
+
 func TestPostPayloadReturnsStatusErrorForUnsuccessfulResponse(t *testing.T) {
 	for _, poster := range posters {
 		t.Run(poster.name, func(t *testing.T) {

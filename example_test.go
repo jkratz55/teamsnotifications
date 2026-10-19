@@ -36,7 +36,9 @@ func Example() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	err := teams.PostPayload(ctx, os.Getenv("TEAMS_WEBHOOK_URL"), teams.NewAdaptiveCardMessage(card))
+	// If the webhook's flow reads cards from an attachments array, post
+	// teams.NewAdaptiveCardMessage(card) instead.
+	err := teams.PostPayload(ctx, os.Getenv("TEAMS_WEBHOOK_URL"), card)
 	var statusErr *teams.StatusError
 	if errors.As(err, &statusErr) && statusErr.StatusCode == http.StatusTooManyRequests {
 		log.Print("throttled by Teams, retry later")
@@ -49,10 +51,10 @@ func ExampleWithHTTPClient() {
 	client := teams.New(os.Getenv("TEAMS_WEBHOOK_URL"),
 		teams.WithHTTPClient(&http.Client{Timeout: 5 * time.Second}))
 
-	msg := teams.NewAdaptiveCardMessage(teams.AdaptiveCard{
+	card := teams.AdaptiveCard{
 		Body: []teams.AdaptiveCardElement{teams.AdaptiveCardTextBlock{Text: "Hello from Go", Wrap: true}},
-	})
-	if err := client.PostPayload(context.Background(), msg); err != nil {
+	}
+	if err := client.PostPayload(context.Background(), card); err != nil {
 		log.Print(err)
 	}
 }

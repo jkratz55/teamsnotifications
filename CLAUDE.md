@@ -22,7 +22,7 @@ golangci-lint run --enable-only=staticcheck,errcheck,govet,ineffassign,unused,re
 
 There's one public operation: `Client.PostPayload` (`teams.go`) marshals any value to JSON and POSTs it. The package-level `PostPayload` is a thin wrapper over `New(webhook).PostPayload`, so make behavior changes in the method only.
 
-**Teams payload shape.** Teams webhooks (Workflows) only render Adaptive Cards wrapped in an envelope: `{"type":"message","attachments":[{"contentType":"application/vnd.microsoft.card.adaptive","content":<card>}]}`. `NewAdaptiveCardMessage` builds it. Posting a bare `AdaptiveCard` gets a 202 response but never appears in the channel, so don't "simplify" the envelope away.
+**Teams payload shape.** The library deliberately doesn't force a payload format, because the right one depends on the webhook. A Workflows webhook runs a Power Automate flow that decides how to read the body. A flow that passes the body straight to "Post card in a chat or channel" needs a bare `AdaptiveCard` (what v0.2.0 users send). A flow that loops over `attachments` needs the envelope `{"type":"message","attachments":[{"contentType":"application/vnd.microsoft.card.adaptive","content":<card>}]}`, which `NewAdaptiveCardMessage` builds. Keep both working, and never document either one as the only valid format.
 
 **Card types (`types.go`) follow one pattern** that every new element or action should copy:
 - No `Type` field. `MarshalJSON` injects `"type"` by converting to a local method-less alias type (avoiding recursion) and embedding it in an anonymous struct after a `Type` field, so `"type"` comes first.

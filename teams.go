@@ -69,7 +69,8 @@ func New(webhook string, opts ...Option) *Client {
 }
 
 // PostPayload marshals any payload value and sends it to the MS Teams webhook.
-// Adaptive Cards must be wrapped in a Message, see NewAdaptiveCardMessage.
+// Post an AdaptiveCard directly or wrapped with NewAdaptiveCardMessage,
+// depending on what the webhook expects.
 //
 // A 2xx response means the webhook accepted the request. Workflows webhooks
 // respond with 202 Accepted before the workflow runs, so a nil error does not
